@@ -89,4 +89,15 @@ public class CreateRideDTO {
     private Double dropLongitude;
     
     private Integer totalSeats;
+    
+    // NEW: Intermediate stops
+    private java.util.List<StopDTO> intermediateStops;
+    
+    public java.util.List<StopDTO> getIntermediateStops() {
+        return intermediateStops;
+    }
+
+    public void setIntermediateStops(java.util.List<StopDTO> intermediateStops) {
+        this.intermediateStops = intermediateStops;
+    }
 }

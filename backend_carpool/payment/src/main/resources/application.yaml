@@ -17,3 +17,7 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
+# Razorpay Configuration
+razorpay:
+  key-id: rzp_test_l97jbasant0am9
+  key-secret: rH2s7jk8L9mN4pQ1rS2tU3v4

@@ -134,6 +134,15 @@ export default function DriverDashboard() {
       const ride = res.data;
 
       setCurrentRide(ride);
+      
+      // Immediately fetch passengers after ride creation
+      try {
+        const passRes = await rideAPI.getRidePassengers(ride.id);
+        setPassengers(passRes.data.allPassengers || []);
+      } catch (err) {
+        console.error("Error fetching passengers:", err);
+      }
+      
       setSuccess(
         `✅ Ride created! Distance: ${ride.distanceInKm?.toFixed(2)} km, Duration: ${ride.estimatedDurationMinutes} min`,
       );

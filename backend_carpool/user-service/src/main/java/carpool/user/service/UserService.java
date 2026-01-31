@@ -61,6 +61,14 @@ public class UserService {
             .orElseThrow(() -> new RuntimeException("User not found"));
     }
     
+    // Update user rating
+    public User updateRating(Long userId, Double newAverageRating, Integer ratingCount) {
+        User user = getUserById(userId);
+        user.setRating(newAverageRating);
+        user.setRatingCount(ratingCount);
+        return userRepository.save(user);
+    }
+    
     // Generate a simple token
     private String generateToken(User user) {
         String payload = user.getId() + ":" + user.getEmail() + ":" + System.currentTimeMillis();

@@ -30,16 +30,25 @@ public class PaymentService {
     
     // Process payment
     public Payment processPayment(ProcessPaymentDTO dto) {
-        Payment payment = new Payment();
-        payment.setRideId(dto.getRideId());
-        payment.setRiderId(dto.getRiderId());
-        payment.setDriverId(dto.getDriverId());
-        payment.setAmount(dto.getAmount());
-        payment.setMethod(dto.getMethod());
-        payment.setStatus(Payment.PaymentStatus.PENDING);
-        payment.setCreatedAt(LocalDateTime.now());
-        
-        return paymentRepository.save(payment);
+        try {
+            Payment payment = new Payment();
+            payment.setRideId(dto.getRideId());
+            payment.setRiderId(dto.getRiderId());
+            payment.setDriverId(dto.getDriverId());
+            payment.setAmount(dto.getAmount());
+            payment.setMethod(dto.getMethod());
+            payment.setStatus(Payment.PaymentStatus.COMPLETED);
+            payment.setCreatedAt(LocalDateTime.now());
+            payment.setCompletedAt(LocalDateTime.now());
+            payment.setTransactionId("txn_" + UUID.randomUUID().toString());
+            
+            System.out.println("✅ Payment processed: ₹" + dto.getAmount() + " for Ride #" + dto.getRideId());
+            
+            return paymentRepository.save(payment);
+        } catch (Exception e) {
+            System.out.println("❌ Payment processing failed: " + e.getMessage());
+            throw new RuntimeException("Payment processing failed: " + e.getMessage());
+        }
     }
 
     /**
@@ -154,7 +163,34 @@ public class PaymentService {
         rating.setComment(dto.getComment());
         rating.setCreatedAt(LocalDateTime.now());
         
-        return ratingRepository.save(rating);
+        Rating savedRating = ratingRepository.save(rating);
+        
+        // Sync with User Service
+        updateUserRatingInProfile(dto.getToUserId());
+        
+        return savedRating;
+    }
+    
+    // Update User Profile Rating
+    private void updateUserRatingInProfile(Long userId) {
+        try {
+            Double avg = ratingRepository.getAverageRating(userId);
+            if (avg == null) avg = 0.0;
+            
+            // Count total ratings
+            List<Rating> ratings = ratingRepository.findByToUserId(userId);
+            int count = ratings.size();
+            
+            String url = "http://localhost:8081/api/users/" + userId + "/rating";
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("rating", avg);
+            payload.put("count", count);
+            
+            restTemplate.put(url, payload);
+            System.out.println("✅ Updated User Profile Rating: " + avg + " (" + count + ")");
+        } catch (Exception e) {
+            System.err.println("❌ Failed to update User Profile Rating: " + e.getMessage());
+        }
     }
     
     // Get user's average rating

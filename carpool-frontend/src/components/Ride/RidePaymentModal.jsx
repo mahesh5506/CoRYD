@@ -4,7 +4,7 @@ import { useState } from "react";
 export default function RidePaymentModal({ ride, passenger, totalFare, onPaymentComplete, loading }) {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("card");
 
-  const distance = ((50 + parseFloat(totalFare - 50) / 10).toFixed(1));
+  const distance = ((30 + parseFloat(totalFare - 30) / 10).toFixed(1));
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -64,7 +64,7 @@ export default function RidePaymentModal({ ride, passenger, totalFare, onPayment
             <div className="space-y-2 mb-3">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Base Fare</span>
-                <span className="text-gray-800">₹50</span>
+                <span className="text-gray-800">₹30</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Distance Charge ({distance} km)</span>

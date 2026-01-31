@@ -21,10 +21,18 @@ public class RideRequest {
     @Column(nullable = false)
     private String dropLocation;
     
+    private Double pickupLatitude;
+    private Double pickupLongitude;
+    private Double dropLatitude;
+    private Double dropLongitude;
+    
     @Enumerated(EnumType.STRING)
     private RequestStatus status;
     
     private Long matchedRideId;  // Set when matched
+    
+    private Double distance; // Stored as km
+    private Double fare;     // Stored as currency value
     
     private LocalDateTime createdAt;
     
@@ -93,6 +101,38 @@ public class RideRequest {
 
 	public LocalDateTime getCreatedAt() {
 		return createdAt;
+	}
+
+	public Double getPickupLatitude() {
+		return pickupLatitude;
+	}
+
+	public void setPickupLatitude(Double pickupLatitude) {
+		this.pickupLatitude = pickupLatitude;
+	}
+
+	public Double getPickupLongitude() {
+		return pickupLongitude;
+	}
+
+	public void setPickupLongitude(Double pickupLongitude) {
+		this.pickupLongitude = pickupLongitude;
+	}
+
+	public Double getDropLatitude() {
+		return dropLatitude;
+	}
+
+	public void setDropLatitude(Double dropLatitude) {
+		this.dropLatitude = dropLatitude;
+	}
+
+	public Double getDropLongitude() {
+		return dropLongitude;
+	}
+
+	public void setDropLongitude(Double dropLongitude) {
+		this.dropLongitude = dropLongitude;
 	}
 
 	public void setCreatedAt(LocalDateTime createdAt) {

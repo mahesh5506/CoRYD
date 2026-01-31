@@ -1,23 +1,26 @@
 import { MapPin, Clock, Users, DollarSign, AlertCircle, Loader } from "lucide-react";
 
 export default function RiderActiveRideStatus({ ride, passenger, onProceedToPayment, loading }) {
-  const calculateDistance = (pickup, drop) => {
-    if (!pickup || !drop) return 0;
+  const calculateDistance = (pLat, pLng, dLat, dLng) => {
+    if (!pLat || !pLng || !dLat || !dLng) return "0.0";
     const R = 6371;
-    const dLat = ((drop.lat - pickup.lat) * Math.PI) / 180;
-    const dLon = ((drop.lng - pickup.lng) * Math.PI) / 180;
+    const dLatRad = ((dLat - pLat) * Math.PI) / 180;
+    const dLonRad = ((dLng - pLng) * Math.PI) / 180;
     const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((pickup.lat * Math.PI) / 180) *
-        Math.cos((drop.lat * Math.PI) / 180) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
+      Math.sin(dLatRad / 2) * Math.sin(dLatRad / 2) +
+      Math.cos((pLat * Math.PI) / 180) *
+        Math.cos((dLat * Math.PI) / 180) *
+        Math.sin(dLonRad / 2) *
+        Math.sin(dLonRad / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return (R * c).toFixed(1);
   };
 
-  const distance = calculateDistance(ride?.pickupLocation, ride?.dropLocation);
-  const fare = (50 + parseFloat(distance) * 10).toFixed(0);
+  const distance = calculateDistance(
+      ride?.pickupLatitude, ride?.pickupLongitude,
+      ride?.dropLatitude, ride?.dropLongitude
+  );
+  const fare = (30 + parseFloat(distance) * 10).toFixed(0);
 
   const getStatusDisplay = () => {
     switch (passenger?.status) {
@@ -97,12 +100,12 @@ export default function RiderActiveRideStatus({ ride, passenger, onProceedToPaym
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <p className="text-xs text-gray-600 uppercase font-semibold mb-1">From</p>
-              <p className="text-lg font-bold text-gray-800">📍 {ride?.pickupLocation?.name || ride?.pickup || "Pickup Location"}</p>
+              <p className="text-lg font-bold text-gray-800">📍 {ride?.pickupLocation || ride?.pickup || "Pickup Location"}</p>
             </div>
             <div className="px-4 text-gray-400">→</div>
             <div className="flex-1 text-right">
               <p className="text-xs text-gray-600 uppercase font-semibold mb-1">To</p>
-              <p className="text-lg font-bold text-gray-800">{ride?.dropLocation?.name || ride?.drop || "Drop Location"} 📍</p>
+              <p className="text-lg font-bold text-gray-800">{ride?.dropLocation || ride?.drop || "Drop Location"} 📍</p>
             </div>
           </div>
         </div>
@@ -117,7 +120,7 @@ export default function RiderActiveRideStatus({ ride, passenger, onProceedToPaym
             </div>
             <div className="pb-4">
               <p className="text-xs text-gray-500 uppercase font-semibold">Pickup Location</p>
-              <p className="font-semibold text-gray-800 text-lg">{ride?.pickupLocation?.name}</p>
+              <p className="font-semibold text-gray-800 text-lg">{ride?.pickupLocation || "Unknown"}</p>
               <p className="text-sm text-gray-600">
                 {passenger?.status === "MATCHED" ? "Driver is on the way" : "Picked up"}
               </p>
@@ -131,7 +134,7 @@ export default function RiderActiveRideStatus({ ride, passenger, onProceedToPaym
             </div>
             <div>
               <p className="text-xs text-gray-500 uppercase font-semibold">Drop Location</p>
-              <p className="font-semibold text-gray-800 text-lg">{ride?.dropLocation?.name}</p>
+              <p className="font-semibold text-gray-800 text-lg">{ride?.dropLocation || "Unknown"}</p>
               <p className="text-sm text-gray-600">
                 {passenger?.status === "DROPPED" ? "You have arrived" : "Heading here"}
               </p>
@@ -199,6 +202,7 @@ export default function RiderActiveRideStatus({ ride, passenger, onProceedToPaym
                 Driver will arrive soon. Get ready at your pickup location.
               </p>
               <button
+                onClick={() => alert("Please wait for the driver to confirm your boarding.")}
                 className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition flex items-center justify-center gap-2"
               >
                 ✓ I'm ready to board

@@ -44,6 +44,26 @@ public class RidePassenger {
     private Boolean paymentCompleted;
     private Boolean rated;
     
+    // NEW: Segment tracking
+    private Integer startSegmentSequence;
+    private Integer endSegmentSequence;
+
+    public Integer getStartSegmentSequence() {
+        return startSegmentSequence;
+    }
+
+    public void setStartSegmentSequence(Integer startSegmentSequence) {
+        this.startSegmentSequence = startSegmentSequence;
+    }
+
+    public Integer getEndSegmentSequence() {
+        return endSegmentSequence;
+    }
+
+    public void setEndSegmentSequence(Integer endSegmentSequence) {
+        this.endSegmentSequence = endSegmentSequence;
+    }
+    
     public Long getId() {
 		return id;
 	}

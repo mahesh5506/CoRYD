@@ -86,4 +86,16 @@ public class UserController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+    
+    @PutMapping("/{id}/rating")
+    public ResponseEntity<?> updateUserRating(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
+        try {
+            Double rating = ((Number) payload.get("rating")).doubleValue();
+            Integer count = ((Number) payload.get("count")).intValue();
+            User user = userService.updateRating(id, rating, count);
+            return ResponseEntity.ok(user);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

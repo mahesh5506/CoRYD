@@ -54,7 +54,14 @@ public class MatchingService {
             if (bestMatch != null) {
                 // Create match record
                 Match match = createMatchRecord(dto, bestMatch);
-                
+                                // Update the RideRequest in Ride Service to set matchedRideId
+                try {
+                    String rideServiceSetMatchUrl = "http://localhost:8082/api/rides/request/" + dto.getRequestId() + "/set-matched/" + getLongValue(bestMatch.get("id"));
+                    restTemplate.put(rideServiceSetMatchUrl, null);
+                    System.out.println("🔁 Notified ride-service to set matchedRideId for request " + dto.getRequestId());
+                } catch (Exception e) {
+                    System.err.println("⚠️ Failed to update RideRequest matchedRideId: " + e.getMessage());
+                }
                 // Notify driver via Notification Service
                 notifyDriver(match);
                 

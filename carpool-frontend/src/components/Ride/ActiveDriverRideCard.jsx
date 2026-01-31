@@ -5,6 +5,14 @@ export default function ActiveDriverRideCard({ ride, passengers, onBoardPassenge
   const boardedPassengers = passengers.filter(p => p.status === "BOARDED");
   const droppedPassengers = passengers.filter(p => p.status === "DROPPED");
 
+  console.log("🎯 ActiveDriverRideCard - Passengers breakdown:", {
+    total: passengers.length,
+    matched: matchedPassengers.length,
+    boarded: boardedPassengers.length,
+    dropped: droppedPassengers.length,
+    allPassengers: passengers.map(p => ({id: p.id, status: p.status, name: p.riderName}))
+  });
+
   const calculateDistance = (pickup, drop) => {
     if (!pickup || !drop) return 0;
     const R = 6371;
@@ -44,7 +52,7 @@ export default function ActiveDriverRideCard({ ride, passengers, onBoardPassenge
             <MapPin size={18} className="text-green-600 flex-shrink-0 mt-1" />
             <div className="flex-1">
               <p className="text-xs text-gray-500 uppercase">From</p>
-              <p className="font-semibold text-gray-800">{ride?.pickupLocation?.name}</p>
+              <p className="font-semibold text-gray-800">{ride?.pickupLocation?.name || ride?.pickupLocation || "Unknown"}</p>
             </div>
           </div>
 
@@ -52,7 +60,7 @@ export default function ActiveDriverRideCard({ ride, passengers, onBoardPassenge
             <MapPin size={18} className="text-red-600 flex-shrink-0 mt-1" />
             <div className="flex-1">
               <p className="text-xs text-gray-500 uppercase">To</p>
-              <p className="font-semibold text-gray-800">{ride?.dropLocation?.name}</p>
+              <p className="font-semibold text-gray-800">{ride?.dropLocation?.name || ride?.dropLocation || "Unknown"}</p>
             </div>
           </div>
         </div>
@@ -68,20 +76,24 @@ export default function ActiveDriverRideCard({ ride, passengers, onBoardPassenge
             </span>
             Waiting for Pickup
           </h4>
-          <div className="space-y-2">
-            {matchedPassengers.map((passenger) => (
-              <div key={passenger.id} className="bg-yellow-50 rounded p-3 border border-yellow-200">
-                <p className="font-semibold text-gray-800 text-sm">{passenger.passengerName}</p>
-                <p className="text-xs text-gray-600 mb-2">{passenger.pickupLocation}</p>
-                <button
-                  onClick={() => onBoardPassenger(passenger.id)}
-                  disabled={loading}
-                  className="w-full px-3 py-2 bg-yellow-500 text-white rounded font-semibold text-sm hover:bg-yellow-600 disabled:opacity-50 transition"
-                >
-                  Board Passenger
-                </button>
-              </div>
-            ))}
+          <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+            {matchedPassengers.length > 0 ? (
+              matchedPassengers.map((passenger) => (
+                <div key={passenger.id} className="bg-yellow-50 rounded p-3 border border-yellow-200">
+                  <p className="font-semibold text-gray-800 text-sm">{passenger.riderName}</p>
+                  <p className="text-xs text-gray-600 mb-2">{passenger.boardingLocation}</p>
+                  <button
+                    onClick={() => onBoardPassenger(passenger.id)}
+                    disabled={loading}
+                    className="w-full px-3 py-2 bg-yellow-500 text-white rounded font-semibold text-sm hover:bg-yellow-600 disabled:opacity-50 transition"
+                  >
+                    Board Passenger
+                  </button>
+                </div>
+              ))
+            ) : (
+              <p className="text-xs text-gray-500 italic">No passengers waiting</p>
+            )}
           </div>
         </div>
 
@@ -93,20 +105,24 @@ export default function ActiveDriverRideCard({ ride, passengers, onBoardPassenge
             </span>
             In Ride
           </h4>
-          <div className="space-y-2">
-            {boardedPassengers.map((passenger) => (
-              <div key={passenger.id} className="bg-green-50 rounded p-3 border border-green-200">
-                <p className="font-semibold text-gray-800 text-sm">{passenger.passengerName}</p>
-                <p className="text-xs text-gray-600 mb-2">{passenger.dropLocation}</p>
-                <button
-                  onClick={() => onDropPassenger(passenger.id)}
-                  disabled={loading || processingPayment === passenger.id}
-                  className={`w-full px-3 py-2 rounded font-semibold text-sm transition ${processingPayment === passenger.id ? 'bg-gray-400 text-gray-600 cursor-not-allowed' : 'bg-green-500 text-white hover:bg-green-600 disabled:opacity-50'}`}
-                >
-                  {processingPayment === passenger.id ? '💳 Processing...' : 'Drop Off Passenger'}
-                </button>
-              </div>
-            ))}
+          <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+            {boardedPassengers.length > 0 ? (
+              boardedPassengers.map((passenger) => (
+                <div key={passenger.id} className="bg-green-50 rounded p-3 border border-green-200">
+                  <p className="font-semibold text-gray-800 text-sm">{passenger.riderName}</p>
+                  <p className="text-xs text-gray-600 mb-2">{passenger.dropLocation}</p>
+                  <button
+                    onClick={() => onDropPassenger(passenger.id)}
+                    disabled={loading || processingPayment === passenger.id}
+                    className={`w-full px-3 py-2 rounded font-semibold text-sm transition ${processingPayment === passenger.id ? 'bg-gray-400 text-gray-600 cursor-not-allowed' : 'bg-green-500 text-white hover:bg-green-600 disabled:opacity-50'}`}
+                  >
+                    {processingPayment === passenger.id ? '💳 Processing...' : 'Drop Off Passenger'}
+                  </button>
+                </div>
+              ))
+            ) : (
+              <p className="text-xs text-gray-500 italic">No passengers boarded yet</p>
+            )}
           </div>
         </div>
 
@@ -118,14 +134,18 @@ export default function ActiveDriverRideCard({ ride, passengers, onBoardPassenge
             </span>
             Completed
           </h4>
-          <div className="space-y-2">
-            {droppedPassengers.map((passenger) => (
-              <div key={passenger.id} className="bg-gray-50 rounded p-3 border border-gray-200">
-                <p className="font-semibold text-gray-800 text-sm">{passenger.passengerName}</p>
-                <p className="text-xs text-gray-600 mb-1">✓ Dropped off</p>
-                <p className="text-xs font-semibold text-green-600">Earned: ₹{passenger.fare}</p>
-              </div>
-            ))}
+          <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+            {droppedPassengers.length > 0 ? (
+              droppedPassengers.map((passenger) => (
+                <div key={passenger.id} className="bg-gray-50 rounded p-3 border border-gray-200">
+                  <p className="font-semibold text-gray-800 text-sm">{passenger.riderName}</p>
+                  <p className="text-xs text-gray-600 mb-1">✓ Dropped off</p>
+                  <p className="text-xs font-semibold text-green-600">Earned: ₹{passenger.fareAmount}</p>
+                </div>
+              ))
+            ) : (
+              <p className="text-xs text-gray-500 italic">No completed rides yet</p>
+            )}
           </div>
         </div>
       </div>
