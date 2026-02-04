@@ -48,6 +48,9 @@ public class Ride {
     private Double estimatedFare;
     private String routeInformation;
     
+    @Transient
+    private java.util.List<RidePassenger> passengers;
+    
     public Long getId() {
 		return id;
 	}
@@ -208,9 +211,29 @@ public class Ride {
 		this.routeInformation = routeInformation;
 	}
 
+    public java.util.List<RidePassenger> getPassengers() {
+        return passengers;
+    }
+
+    public void setPassengers(java.util.List<RidePassenger> passengers) {
+        this.passengers = passengers;
+    }
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "ride", fetch = FetchType.EAGER)
+    private java.util.List<RouteSegment> segments;
+
+    public java.util.List<RouteSegment> getSegments() {
+        return segments;
+    }
+
+    public void setSegments(java.util.List<RouteSegment> segments) {
+        this.segments = segments;
+    }
+
 	public enum RideStatus {
         WAITING,
         IN_PROGRESS,
-        COMPLETED
+        COMPLETED,
+        CANCELLED
     }
 }

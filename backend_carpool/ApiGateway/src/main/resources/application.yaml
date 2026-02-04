@@ -7,7 +7,7 @@ spring:
 
   cloud:
     gateway:
-      # 🔑 CORS CONFIG (MANDATORY FOR REACT)
+      #  CORS CONFIG (MANDATORY FOR REACT)
       globalcors:
         corsConfigurations:
           "[/**]":
@@ -29,30 +29,93 @@ spring:
           lower-case-service-id: true
 
       routes:
-        - id: user-service
+        # User Service (Public Endpoints - Login/Register)
+        - id: user-service-public
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/users/login, /api/users/register
+
+        # User Service (Protected Endpoints)
+        - id: user-service-protected
           uri: lb://USER-SERVICE
           predicates:
             - Path=/api/users/**
+          filters:
+            - JwtAuthenticationFilter
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@userKeyResolver}"
 
         - id: ride-service
           uri: lb://RIDE-SERVICE
           predicates:
             - Path=/api/rides/**
+          filters:
+            - JwtAuthenticationFilter
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@userKeyResolver}"
 
         - id: matching-service
           uri: lb://MATCHING-SERVICE
           predicates:
             - Path=/api/matching/**
+          filters:
+            - JwtAuthenticationFilter
 
         - id: notification-service
           uri: lb://NOTIFICATION-SERVICE
           predicates:
             - Path=/api/notifications/**
+          filters:
+            - JwtAuthenticationFilter
 
         - id: payment-service
           uri: lb://PAYMENT-SERVICE
           predicates:
             - Path=/api/payments/**
+          filters:
+            - JwtAuthenticationFilter
+
+        # OpenAPI Routes
+        - id: openapi-user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/v3/api-docs/user-service
+          filters:
+            - RewritePath=/v3/api-docs/user-service, /v3/api-docs
+
+        - id: openapi-ride-service
+          uri: lb://RIDE-SERVICE
+          predicates:
+            - Path=/v3/api-docs/ride-service
+          filters:
+            - RewritePath=/v3/api-docs/ride-service, /v3/api-docs
+
+        - id: openapi-matching-service
+          uri: lb://MATCHING-SERVICE
+          predicates:
+            - Path=/v3/api-docs/matching-service
+          filters:
+            - RewritePath=/v3/api-docs/matching-service, /v3/api-docs
+
+        - id: openapi-notification-service
+          uri: lb://NOTIFICATION-SERVICE
+          predicates:
+            - Path=/v3/api-docs/notification-service
+          filters:
+            - RewritePath=/v3/api-docs/notification-service, /v3/api-docs
+
+        - id: openapi-payment-service
+          uri: lb://PAYMENT-SERVICE
+          predicates:
+            - Path=/v3/api-docs/payment-service
+          filters:
+            - RewritePath=/v3/api-docs/payment-service, /v3/api-docs
 
 eureka:
   client:
@@ -60,3 +123,17 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
   instance:
     prefer-ip-address: true
+
+springdoc:
+  swagger-ui:
+    urls:
+      - name: User Service
+        url: /v3/api-docs/user-service
+      - name: Ride Service
+        url: /v3/api-docs/ride-service
+      - name: Matching Service
+        url: /v3/api-docs/matching-service
+      - name: Notification Service
+        url: /v3/api-docs/notification-service
+      - name: Payment Service
+        url: /v3/api-docs/payment-service

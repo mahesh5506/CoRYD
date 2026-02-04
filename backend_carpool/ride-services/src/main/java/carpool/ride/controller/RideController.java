@@ -64,19 +64,103 @@ public class RideController {
     }
     
     /**
+     * Get all pending requests for a rider
+     * GET /api/rides/request/rider/{riderId}
+     */
+    @GetMapping("/request/rider/{riderId}")
+    public ResponseEntity<?> getRiderRequests(@PathVariable Long riderId) {
+        try {
+            List<RideRequest> requests = rideService.getRiderRequests(riderId);
+            return ResponseEntity.ok(Map.of(
+                "total", requests.size(),
+                "requests", requests
+            ));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Failed to fetch rider requests",
+                "message", e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Get ONLY ACTIVE/CURRENT requests for a rider (filters out completed/cancelled)
+     * GET /api/rides/request/rider/{riderId}/active
+     */
+    @GetMapping("/request/rider/{riderId}/active")
+    public ResponseEntity<?> getRiderActiveRequests(@PathVariable Long riderId) {
+        try {
+            List<RideRequest> activeRequests = rideService.getRiderActiveRequests(riderId);
+            return ResponseEntity.ok(Map.of(
+                "total", activeRequests.size(),
+                "activeRequests", activeRequests,
+                "message", activeRequests.isEmpty() ? "No active requests" : "Active requests found"
+            ));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Failed to fetch active requests",
+                "message", e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Get ride history for a rider (Completed rides)
+     * GET /api/rides/rider/history/{riderId}
+     */
+    @GetMapping("/rider/history/{riderId}")
+    public ResponseEntity<?> getRiderHistory(@PathVariable Long riderId) {
+        try {
+            List<Map<String, Object>> history = rideService.getRidesByRider(riderId);
+            return ResponseEntity.ok(Map.of(
+                "total", history.size(),
+                "history", history
+            ));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Failed to fetch rider history",
+                "message", e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Set matchedRideId on a RideRequest (called by Matching Service)
+     * PUT /api/rides/request/{requestId}/set-matched/{rideId}
+     */
+    @PutMapping("/request/{requestId}/set-matched/{rideId}")
+    public ResponseEntity<?> setMatchedRideOnRequest(@PathVariable Long requestId, @PathVariable Long rideId) {
+        try {
+            RideRequest updated = rideService.setMatchedRideForRequest(requestId, rideId);
+            return ResponseEntity.ok(Map.of("success", true, "request", updated));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of("error", "Failed to set matched ride", "message", e.getMessage()));
+        }
+    }
+    
+    /**
      * Driver accepts a ride request
-     * POST /api/rides/request/{requestId}/accept
+     * POST /api/rides/request/{requestId}/accept?activeRideId=123
      */
     @PostMapping("/request/{requestId}/accept")
-    public ResponseEntity<?> acceptRideRequest(@PathVariable Long requestId) {
+    public ResponseEntity<?> acceptRideRequest(
+        @PathVariable Long requestId,
+        @RequestParam(required = false) Long activeRideId
+    ) {
+        System.out.println("Endpoint Hit: /api/rides/request/" + requestId + "/accept (ActiveRideId: " + activeRideId + ")");
         try {
-            RidePassenger passenger = rideService.acceptRideRequest(requestId);
+            RidePassenger passenger = rideService.acceptRideRequest(requestId, activeRideId);
             return ResponseEntity.ok(Map.of(
                 "success", true,
                 "message", "Ride request accepted",
                 "passenger", passenger
             ));
         } catch (Exception e) {
+            System.err.println("❌ Error in endpoint acceptRideRequest: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of(
                 "error", "Failed to accept ride request",
@@ -154,6 +238,27 @@ public class RideController {
             e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of(
                 "error", "Failed to fetch active rides",
+                "message", e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Get available rides excluding rides the rider already requested
+     * GET /api/rides/available?riderId={riderId}
+     */
+    @GetMapping("/available")
+    public ResponseEntity<?> getAvailableRides(@RequestParam Long riderId) {
+        try {
+            List<Ride> rides = rideService.getAvailableRidesForRider(riderId);
+            return ResponseEntity.ok(Map.of(
+                "total", rides.size(),
+                "rides", rides
+            ));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Failed to fetch available rides",
                 "message", e.getMessage()
             ));
         }
@@ -348,6 +453,11 @@ public class RideController {
         try {
             List<RidePassenger> allPassengers = rideService.getRidePassengers(rideId);
             List<RidePassenger> currentPassengers = rideService.getCurrentPassengers(rideId);
+            
+            System.out.println("📋 getRidePassengers called for ride " + rideId);
+            System.out.println("   Total passengers: " + allPassengers.size());
+            System.out.println("   Currently boarded: " + currentPassengers.size());
+            allPassengers.forEach(p -> System.out.println("   - Passenger " + p.getId() + " (Rider: " + p.getRiderId() + "): " + p.getStatus()));
             
             // Group by status
             Map<String, List<RidePassenger>> groupedByStatus = new HashMap<>();

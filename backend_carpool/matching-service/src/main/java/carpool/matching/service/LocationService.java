@@ -22,7 +22,7 @@ public class LocationService {
     @Value("${openrouteservice.directions-url}")
     private String directionsUrl;
     
-    @Value("${matching.max-radius-km:5.0}")
+    @Value("${matching.max-radius-km:15.0}")
     private double maxRadiusKm;
     
     private final RestTemplate restTemplate;
@@ -46,7 +46,7 @@ public class LocationService {
             double[] coords2 = geocodeLocationNominatim(location2);
             
             if (coords1 == null || coords2 == null) {
-                System.err.println("⚠️ Geocoding failed for one or both locations");
+                System.err.println(" Geocoding failed for one or both locations");
                 return -1;
             }
             
@@ -63,7 +63,7 @@ public class LocationService {
             return -1;
             
         } catch (Exception e) {
-            System.err.println("❌ Error calculating distance: " + e.getMessage());
+            System.err.println("Error calculating distance: " + e.getMessage());
             return -1;
         }
     }
@@ -105,7 +105,7 @@ public class LocationService {
             return null;
             
         } catch (Exception e) {
-            System.err.println("❌ Geocoding error: " + e.getMessage());
+            System.err.println(" Geocoding error: " + e.getMessage());
             return null;
         }
     }
@@ -140,11 +140,15 @@ public class LocationService {
         
         if (distance < 0) {
             // Fall back to string matching
-            return normalizeLocation(riderPickup).equals(normalizeLocation(driverPickup));
+            boolean matches = normalizeLocation(riderPickup).equals(normalizeLocation(driverPickup));
+            System.out.println("   Pickup (geocoding failed, string match): " + riderPickup + " vs " + driverPickup + " = " + matches);
+            return matches;
         }
         
-        System.out.println("📍 Pickup distance: " + distance + " km (max: " + maxRadiusKm + " km)");
-        return distance <= maxRadiusKm;
+        boolean withinRadius = distance <= maxRadiusKm;
+        System.out.println("   Pickup: " + riderPickup + " vs " + driverPickup);
+        System.out.println("     Distance: " + String.format("%.2f", distance) + " km (max: " + maxRadiusKm + " km) = " + withinRadius);
+        return withinRadius;
     }
     
     /**
@@ -154,11 +158,15 @@ public class LocationService {
         double distance = calculateDistance(riderDrop, driverDrop);
         
         if (distance < 0) {
-            return normalizeLocation(riderDrop).equals(normalizeLocation(driverDrop));
+            boolean matches = normalizeLocation(riderDrop).equals(normalizeLocation(driverDrop));
+            System.out.println("   Drop (geocoding failed, string match): " + riderDrop + " vs " + driverDrop + " = " + matches);
+            return matches;
         }
         
-        System.out.println("📍 Drop distance: " + distance + " km (max: " + maxRadiusKm + " km)");
-        return distance <= maxRadiusKm;
+        boolean withinRadius = distance <= maxRadiusKm;
+        System.out.println("   Drop: " + riderDrop + " vs " + driverDrop);
+        System.out.println("     Distance: " + String.format("%.2f", distance) + " km (max: " + maxRadiusKm + " km) = " + withinRadius);
+        return withinRadius;
     }
     
     /**
@@ -166,8 +174,19 @@ public class LocationService {
      */
     public boolean isCompleteRouteMatch(String riderPickup, String riderDrop, 
                                        String driverPickup, String driverDrop) {
+        System.out.println("\n=== LOCATION MATCHING DEBUG ===");
+        System.out.println("Rider: " + riderPickup + " → " + riderDrop);
+        System.out.println("Driver: " + driverPickup + " → " + driverDrop);
+        
         boolean pickupMatch = isPickupWithinRadius(riderPickup, driverPickup);
+        System.out.println("Pickup match: " + pickupMatch);
+        
         boolean dropMatch = isDropWithinRadius(riderDrop, driverDrop);
+        System.out.println("Drop match: " + dropMatch);
+        
+        System.out.println("Overall route match: " + (pickupMatch && dropMatch));
+        System.out.println("===========================\n");
+        
         return pickupMatch && dropMatch;
     }
     
@@ -191,7 +210,7 @@ public class LocationService {
         
         int score = (int) Math.max(0, 100 - (totalDistance * 10));
         
-        System.out.println("🎯 Matching score: " + score + "/100 (pickup: " + 
+        System.out.println(" Matching score: " + score + "/100 (pickup: " + 
                           pickupDistance + " km, drop: " + dropDistance + " km)");
         
         return score;

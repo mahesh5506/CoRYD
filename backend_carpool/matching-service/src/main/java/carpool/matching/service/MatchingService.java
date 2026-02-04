@@ -28,6 +28,7 @@ public class MatchingService {
     /**
      * Find matching ride for a ride request using intelligent distance-based algorithm
      */
+    @org.springframework.transaction.annotation.Transactional
     public Match findMatch(MatchRequestDTO dto) {
         try {
             // Get all active rides from Ride Service
@@ -46,7 +47,7 @@ public class MatchingService {
                 throw new RuntimeException("No active rides available");
             }
             
-            System.out.println("🔍 Found " + activeRides.size() + " active rides. Searching for best match...");
+            System.out.println("found " + activeRides.size() + " active rides. Searching for best match...");
             
             // NEW: Find best match using distance-based algorithm
             Map<String, Object> bestMatch = findBestMatchByDistance(dto, activeRides);
@@ -54,7 +55,14 @@ public class MatchingService {
             if (bestMatch != null) {
                 // Create match record
                 Match match = createMatchRecord(dto, bestMatch);
-                
+                                // Update the RideRequest in Ride Service to set matchedRideId
+                try {
+                    String rideServiceSetMatchUrl = "http://localhost:8082/api/rides/request/" + dto.getRequestId() + "/set-matched/" + getLongValue(bestMatch.get("id"));
+                    restTemplate.put(rideServiceSetMatchUrl, null);
+                    System.out.println(" Notified ride-service to set matchedRideId for request " + dto.getRequestId());
+                } catch (Exception e) {
+                    System.err.println(" Failed to update RideRequest matchedRideId: " + e.getMessage());
+                }
                 // Notify driver via Notification Service
                 notifyDriver(match);
                 
@@ -89,7 +97,7 @@ public class MatchingService {
                 continue;
             }
             
-            System.out.println("\n🚗 Checking ride #" + ride.get("id") + 
+            System.out.println("\n Checking ride #" + ride.get("id") + 
                              " (" + driverPickup + " → " + driverDrop + ")");
             
             // NEW: Use LocationService to check if route matches
@@ -105,7 +113,7 @@ public class MatchingService {
                     driverPickup, driverDrop
                 );
                 
-                System.out.println("✅ Route matches! Score: " + score);
+                System.out.println("Route matches! Score: " + score);
                 
                 // Keep track of best match (highest score)
                 if (score > highestScore) {
@@ -113,12 +121,12 @@ public class MatchingService {
                     bestRide = ride;
                 }
             } else {
-                System.out.println("❌ Route doesn't match (outside radius)");
+                System.out.println(" Route doesn't match (outside radius)");
             }
         }
         
         if (bestRide != null) {
-            System.out.println("\n🎯 Best match found: Ride #" + bestRide.get("id") + 
+            System.out.println("\n Best match found: Ride #" + bestRide.get("id") + 
                              " with score " + highestScore + "/100");
         }
         
@@ -159,16 +167,16 @@ public class MatchingService {
         
         Map<String, Object> notification = new HashMap<>();
         notification.put("userId", match.getDriverId());
-        notification.put("message", "🚗 New rider matched to your ride! Request ID: " + match.getRideRequestId());
+        notification.put("message", " New rider matched to your ride! Request ID: " + match.getRideRequestId());
         notification.put("type", "MATCH_FOUND");
         
         // Async notification
         new Thread(() -> {
             try {
                 restTemplate.postForObject(notificationServiceUrl, notification, Map.class);
-                System.out.println("📢 Notification sent to driver #" + match.getDriverId());
+                System.out.println(" Notification sent to driver #" + match.getDriverId());
             } catch (Exception e) {
-                System.err.println("⚠️ Notification service unavailable: " + e.getMessage());
+                System.err.println(" Notification service unavailable: " + e.getMessage());
             }
         }).start();
     }

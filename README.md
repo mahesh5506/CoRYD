@@ -1,2 +1,0 @@
-# CoRYD
-Affortable Ride Sharing.

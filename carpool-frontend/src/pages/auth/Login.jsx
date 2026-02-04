@@ -41,7 +41,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600">
       <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-blue-600 mb-2">🚗 Carpool</h1>
+          <h1 className="text-4xl font-bold text-blue-600 mb-2">🚗 CoRYD</h1>
           <p className="text-gray-600">Share rides, share costs</p>
         </div>
 

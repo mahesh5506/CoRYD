@@ -24,24 +24,41 @@ export default function Register() {
     e.preventDefault();
     setError("");
 
-    if (!name || !email || !phone || !password || !confirmPassword) {
-      setError("All fields are required");
+    // --- Validation Logic ---
+    if (!name || name.trim().length < 2) {
+      setError("Full Name must be at least 2 characters.");
       return;
     }
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid Email address.");
+      return;
+    }
+
+    // Phone: exactly 10 digits
+    const phoneRegex = /^\d{10}$/;
+    if (!phoneRegex.test(phone)) {
+      setError("Phone number must be exactly 10 digits.");
       return;
     }
 
     if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+      setError("Password must be at least 6 characters.");
       return;
     }
 
-    if (role === "DRIVER" && !vehicleNumber) {
-      setError("Vehicle number is required for drivers");
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
       return;
+    }
+
+    if (role === "DRIVER") {
+      if (!vehicleNumber || vehicleNumber.trim().length < 5) {
+        setError("Please enter a valid Vehicle Number.");
+        return;
+      }
+      // Optional: stricter regex for vehicle number if needed
     }
 
     try {
@@ -93,7 +110,7 @@ export default function Register() {
       <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-blue-600">🚗 Create Account</h1>
-          <p className="text-gray-600 mt-2">Join Carpool Community</p>
+          <p className="text-gray-600 mt-2">Join CoRYD Community</p>
         </div>
 
         <form onSubmit={handleRegister} className="space-y-4">

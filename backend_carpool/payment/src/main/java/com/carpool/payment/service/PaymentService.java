@@ -30,16 +30,25 @@ public class PaymentService {
     
     // Process payment
     public Payment processPayment(ProcessPaymentDTO dto) {
-        Payment payment = new Payment();
-        payment.setRideId(dto.getRideId());
-        payment.setRiderId(dto.getRiderId());
-        payment.setDriverId(dto.getDriverId());
-        payment.setAmount(dto.getAmount());
-        payment.setMethod(dto.getMethod());
-        payment.setStatus(Payment.PaymentStatus.PENDING);
-        payment.setCreatedAt(LocalDateTime.now());
-        
-        return paymentRepository.save(payment);
+        try {
+            Payment payment = new Payment();
+            payment.setRideId(dto.getRideId());
+            payment.setRiderId(dto.getRiderId());
+            payment.setDriverId(dto.getDriverId());
+            payment.setAmount(dto.getAmount());
+            payment.setMethod(dto.getMethod());
+            payment.setStatus(Payment.PaymentStatus.COMPLETED);
+            payment.setCreatedAt(LocalDateTime.now());
+            payment.setCompletedAt(LocalDateTime.now());
+            payment.setTransactionId("txn_" + UUID.randomUUID().toString());
+            
+            System.out.println("Payment processed: " + dto.getAmount() + " for Ride " + dto.getRideId());
+            
+            return paymentRepository.save(payment);
+        } catch (Exception e) {
+            System.out.println(" Payment processing failed: " + e.getMessage());
+            throw new RuntimeException("Payment processing failed: " + e.getMessage());
+        }
     }
 
     /**
@@ -53,7 +62,7 @@ public class PaymentService {
             Double amount,
             String description) {
         
-        System.out.println("📋 Creating payment order - Ride: " + rideId + ", Amount: ₹" + amount);
+        System.out.println(" Creating payment order - Ride: " + rideId + ", Amount: " + amount);
         
         Payment payment = new Payment();
         payment.setRideId(rideId);
@@ -71,7 +80,7 @@ public class PaymentService {
         payment.setRazorpayOrderId("order_" + payment.getId());
         payment = paymentRepository.save(payment);
         
-        System.out.println("✅ Payment order created with ID: " + payment.getRazorpayOrderId());
+        System.out.println(" Payment order created with ID: " + payment.getRazorpayOrderId());
         
         return payment;
     }
@@ -96,7 +105,7 @@ public class PaymentService {
         );
         
         if (!isValid) {
-            throw new RuntimeException("❌ Invalid Razorpay signature");
+            throw new RuntimeException("Invalid Razorpay signature");
         }
         
         // Find payment by Razorpay Order ID
@@ -104,7 +113,7 @@ public class PaymentService {
         Payment payment = allPayments.stream()
             .filter(p -> razorpayOrderId.equals(p.getRazorpayOrderId()))
             .findFirst()
-            .orElseThrow(() -> new RuntimeException("❌ Payment not found for order: " + razorpayOrderId));
+            .orElseThrow(() -> new RuntimeException("Payment not found for order: " + razorpayOrderId));
         
         // Update payment with Razorpay details
         payment.setRazorpayPaymentId(razorpayPaymentId);
@@ -113,7 +122,7 @@ public class PaymentService {
         payment.setCompletedAt(LocalDateTime.now());
         payment.setTransactionId(razorpayPaymentId);
         
-        System.out.println("✅ Payment verified and completed: " + razorpayPaymentId);
+        System.out.println(" Payment verified and completed: " + razorpayPaymentId);
         
         // Notify user
         notifyPaymentSuccess(payment.getRiderId());
@@ -154,7 +163,53 @@ public class PaymentService {
         rating.setComment(dto.getComment());
         rating.setCreatedAt(LocalDateTime.now());
         
-        return ratingRepository.save(rating);
+        Rating savedRating = ratingRepository.save(rating);
+        
+        // Sync with User Service
+        updateUserRatingInProfile(dto.getToUserId());
+        
+        return savedRating;
+    }
+    
+    // Update User Profile Rating
+    private void updateUserRatingInProfile(Long userId) {
+        try {
+            Double avg = ratingRepository.getAverageRating(userId);
+            if (avg == null) avg = 0.0;
+            
+            // Count total ratings
+            List<Rating> ratings = ratingRepository.findByToUserId(userId);
+            int count = ratings.size();
+            
+            String url = "http://localhost:8081/api/users/" + userId + "/rating";
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("rating", avg);
+            payload.put("count", count);
+            
+            System.out.println(" Syncing rating with User Service: " + url + " Payload: " + payload);
+            
+            // Use exchange to get response
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+            org.springframework.http.HttpEntity<Map<String, Object>> entity = new org.springframework.http.HttpEntity<>(payload, headers);
+            
+            org.springframework.http.ResponseEntity<String> response = restTemplate.exchange(
+                url, 
+                org.springframework.http.HttpMethod.PUT, 
+                entity, 
+                String.class
+            );
+            
+            if (response.getStatusCode().is2xxSuccessful()) {
+                System.out.println(" Updated User Profile Rating: " + avg + " (" + count + ")");
+            } else {
+                System.err.println(" Failed to update User Profile Rating. Status: " + response.getStatusCode());
+            }
+
+        } catch (Exception e) {
+            System.err.println(" Failed to update User Profile Rating: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
     
     // Get user's average rating
@@ -188,7 +243,7 @@ public class PaymentService {
             .filter(p -> p.getStatus() == Payment.PaymentStatus.COMPLETED)
             .toList();
         
-        System.out.println("📊 Driver " + driverId + " earnings from " + payments.size() + " completed payments");
+        System.out.println(" Driver " + driverId + " earnings from " + payments.size() + " completed payments");
         
         return payments;
     }

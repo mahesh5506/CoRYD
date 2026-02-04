@@ -39,7 +39,7 @@ public class RazorpayVerificationUtil {
             return signature.equals(expectedSignature);
             
         } catch (Exception e) {
-            System.err.println("❌ Signature verification failed: " + e.getMessage());
+            System.err.println(" Signature verification failed: " + e.getMessage());
             return false;
         }
     }

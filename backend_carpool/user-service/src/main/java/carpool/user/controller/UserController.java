@@ -20,6 +20,9 @@ public class UserController {
     
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private carpool.user.util.JwtUtil jwtUtil;
     
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
@@ -37,9 +40,9 @@ public class UserController {
             System.out.println("User registered successfully: " + user);
             System.out.println("User ID: " + user.getId());
             
-            // Generate a simple token (ideally should use JWT)
-            String token = "token_" + user.getId() + "_" + System.currentTimeMillis();
-            System.out.println("Generated token: " + token);
+            // Generate a valid JWT token
+            String token = jwtUtil.generateToken(user);
+            System.out.println("Generated JWT token: " + token);
             
             // Create response map
             Map<String, Object> response = new HashMap<>();
@@ -83,6 +86,22 @@ public class UserController {
             User user = userService.getUserById(id);
             return ResponseEntity.ok(user);
         } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    
+    @PutMapping("/{id}/rating")
+    public ResponseEntity<?> updateUserRating(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
+        System.out.println(" Received Rating Update Request for User " + id + ": " + payload);
+        try {
+            Double rating = ((Number) payload.get("rating")).doubleValue();
+            Integer count = ((Number) payload.get("count")).intValue();
+            User user = userService.updateRating(id, rating, count);
+            System.out.println(" User rating updated successfully: " + user.getRating());
+            return ResponseEntity.ok(user);
+        } catch (Exception e) {
+            System.err.println("  Error updating user rating: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }

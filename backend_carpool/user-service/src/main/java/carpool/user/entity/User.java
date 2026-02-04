@@ -39,6 +39,12 @@ public class User {
     @Column(nullable = true)
     private Integer vehicleCapacity;
 
+    @Column(nullable = true)
+    private Double rating = 0.0;
+
+    @Column(nullable = true)
+    private Integer ratingCount = 0;
+
     public enum Role {
         RIDER,
         DRIVER
@@ -106,6 +112,22 @@ public class User {
 
 	public void setVehicleCapacity(Integer vehicleCapacity) {
 		this.vehicleCapacity = vehicleCapacity;
+	}
+
+	public Double getRating() {
+		return rating;
+	}
+
+	public void setRating(Double rating) {
+		this.rating = rating;
+	}
+
+	public Integer getRatingCount() {
+		return ratingCount;
+	}
+
+	public void setRatingCount(Integer ratingCount) {
+		this.ratingCount = ratingCount;
 	}
     
 }

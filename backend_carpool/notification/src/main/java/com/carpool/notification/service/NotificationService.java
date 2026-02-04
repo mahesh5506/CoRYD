@@ -26,7 +26,7 @@ public class NotificationService {
         Notification saved = notificationRepository.save(notification);
         
         // In production: Send push notification, SMS, email etc.
-        System.out.println("📢 NOTIFICATION SENT to User " + dto.getUserId() + ": " + dto.getMessage());
+        System.out.println(" NOTIFICATION SENT to User " + dto.getUserId() + ": " + dto.getMessage());
         
         return saved;
     }

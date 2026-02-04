@@ -59,12 +59,12 @@ public class MapDistanceUtil {
             
             double distanceInKm = distanceInMeters / 1000.0;
             
-            System.out.println("✅ Distance calculated: " + distanceInKm + " km");
+            System.out.println("Distance calculated: " + distanceInKm + " km");
             
             return Math.round(distanceInKm * 100.0) / 100.0; // Round to 2 decimals
             
         } catch (Exception e) {
-            System.err.println("❌ Error calculating distance: " + e.getMessage());
+            System.err.println(" Error calculating distance: " + e.getMessage());
             e.printStackTrace();
             return 0.0;
         }
@@ -101,12 +101,12 @@ public class MapDistanceUtil {
             
             long durationInMinutes = Math.round(durationInSeconds / 60.0);
             
-            System.out.println("✅ Duration calculated: " + durationInMinutes + " min");
+            System.out.println("Duration calculated: " + durationInMinutes + " min");
             
             return durationInMinutes;
             
         } catch (Exception e) {
-            System.err.println("❌ Error calculating duration: " + e.getMessage());
+            System.err.println(" Error calculating duration: " + e.getMessage());
             return 0L;
         }
     }

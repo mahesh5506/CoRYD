@@ -12,6 +12,7 @@ import RiderRideDetails from "../pages/rider/RiderRideDetails";
 import RiderRides from "../pages/rider/RiderRides";
 import RiderPayments from "../pages/rider/RiderPayments";
 import RiderProfile from "../pages/rider/RiderProfile";
+import RideCompletionPayment from "../pages/rider/RideCompletionPayment";
 
 export default function RiderRoutes() {
   return (
@@ -25,6 +26,7 @@ export default function RiderRoutes() {
         <Route path="active-ride" element={<RiderActiveRide />} />
         <Route path="rides" element={<RiderRides />} />
         <Route path="rides/:rideId" element={<RiderRideDetails />} />
+        <Route path="payment/:rideId" element={<RideCompletionPayment />} />
         <Route path="payments" element={<RiderPayments />} />
         <Route path="profile" element={<RiderProfile />} />
 

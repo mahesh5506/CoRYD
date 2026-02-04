@@ -15,6 +15,12 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
     
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+    
+    @Autowired
+    private carpool.user.util.JwtUtil jwtUtil;
+    
     // Register new user
     public User register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -23,7 +29,8 @@ public class UserService {
         
         User user = new User();
         user.setEmail(request.getEmail());
-        user.setPassword(request.getPassword()); // In production, encrypt this!
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword())); // Encrypted!
         user.setName(request.getName());
         user.setPhone(request.getPhone());
         user.setRole(request.getRole());
@@ -41,12 +48,12 @@ public class UserService {
         User user = userRepository.findByEmail(request.getEmail())
             .orElseThrow(() -> new RuntimeException("User not found"));
         
-        if (!user.getPassword().equals(request.getPassword())) {
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new RuntimeException("Invalid credentials");
         }
         
-        // Generate a simple token (in production, use JWT)
-        String token = generateToken(user);
+        // Generate JWT token 
+        String token = jwtUtil.generateToken(user);
         
         LoginResponse response = new LoginResponse();
         response.setUser(user);
@@ -61,9 +68,19 @@ public class UserService {
             .orElseThrow(() -> new RuntimeException("User not found"));
     }
     
-    // Generate a simple token
+    // Update user rating
+    public User updateRating(Long userId, Double newAverageRating, Integer ratingCount) {
+        User user = getUserById(userId);
+        user.setRating(newAverageRating);
+        user.setRatingCount(ratingCount);
+        return userRepository.save(user);
+    }
+    
+    // Generate a simple token (Deprecated/Unused)
+    /*
     private String generateToken(User user) {
         String payload = user.getId() + ":" + user.getEmail() + ":" + System.currentTimeMillis();
         return Base64.getEncoder().encodeToString(payload.getBytes());
     }
+    */
 }

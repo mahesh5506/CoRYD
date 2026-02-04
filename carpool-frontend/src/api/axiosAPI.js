@@ -32,6 +32,21 @@ export const rideAPI = {
   updateRideStatus: (rideId, status) =>
     api.put(`/rides/${rideId}/status`, null, { params: { status } }),
   getActiveRides: () => api.get("/rides/active"),
+  getRidesByDriver: (driverId) => api.get(`/rides/driver/${driverId}`),
+  // CRITICAL: Add cache-busting timestamp to ensure fresh data across multiple clients
+  getAvailableRides: (riderId) => 
+    api.get("/rides/available", { 
+      params: { 
+        riderId,
+        // Cache buster: force fresh data on every request
+        _t: Date.now()
+      },
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0"
+      }
+    }),
   getRidePassengers: (rideId) => api.get(`/rides/${rideId}/passengers`),
   getCurrentPassengers: (rideId) =>
     api.get(`/rides/${rideId}/current-passengers`),
@@ -39,7 +54,10 @@ export const rideAPI = {
   // Rider endpoints
   createRideRequest: (data) => api.post("/rides/request", data),
   getPendingRequests: (rideId) => api.get(`/rides/${rideId}/requests`),
-  acceptRequest: (requestId) => api.post(`/rides/request/${requestId}/accept`),
+  getRiderRequests: (riderId) => api.get(`/rides/request/rider/${riderId}`),
+  getRiderActiveRequests: (riderId) => api.get(`/rides/request/rider/${riderId}/active`),
+  getRideHistory: (riderId) => api.get(`/rides/rider/history/${riderId}`),
+  acceptRequest: (requestId, activeRideId) => api.post(`/rides/request/${requestId}/accept` + (activeRideId ? `?activeRideId=${activeRideId}` : '')),
   rejectRequest: (requestId) => api.post(`/rides/request/${requestId}/reject`),
 
   // Passenger management

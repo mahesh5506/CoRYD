@@ -134,8 +134,17 @@ export default function DriverDashboard() {
       const ride = res.data;
 
       setCurrentRide(ride);
+      
+      // Immediately fetch passengers after ride creation
+      try {
+        const passRes = await rideAPI.getRidePassengers(ride.id);
+        setPassengers(passRes.data.allPassengers || []);
+      } catch (err) {
+        console.error("Error fetching passengers:", err);
+      }
+      
       setSuccess(
-        `✅ Ride created! Distance: ${ride.distanceInKm?.toFixed(2)} km, Duration: ${ride.estimatedDurationMinutes} min`,
+        `Ride created! Distance: ${ride.distanceInKm?.toFixed(2)} km, Duration: ${ride.estimatedDurationMinutes} min`,
       );
 
       // Reset form
@@ -179,7 +188,7 @@ export default function DriverDashboard() {
       );
       setCurrentRide(res.data.ride);
       setPassengers([]);
-      setSuccess("✅ Ride completed! All passengers dropped.");
+      setSuccess(" Ride completed! All passengers dropped.");
       setTimeout(() => {
         setCurrentRide(null);
         setSuccess("");
@@ -195,7 +204,7 @@ export default function DriverDashboard() {
     setLoading(true);
     try {
       const res = await rideAPI.boardPassenger(passengerId);
-      setSuccess("✅ Passenger boarded!");
+      setSuccess(" Passenger boarded!");
       fetchPassengers();
     } catch (err) {
       setError("Failed to board passenger");
@@ -235,7 +244,7 @@ export default function DriverDashboard() {
               passengerEmail: droppedPassenger.riderEmail || "passenger@coryid.com",
               passengerPhone: droppedPassenger.riderPhone || user.phone,
               onSuccess: async (response) => {
-                setSuccess(`💳 Payment successful! ₹${droppedPassenger.fareAmount.toFixed(2)} received from ${droppedPassenger.riderName}`);
+                setSuccess(` Payment successful! ₹${droppedPassenger.fareAmount.toFixed(2)} received from ${droppedPassenger.riderName}`);
                 setProcessingPayment(null);
                 fetchPassengers();
                 // Fetch updated earnings
@@ -252,18 +261,18 @@ export default function DriverDashboard() {
               },
             });
           } else {
-            setSuccess("🎉 Passenger dropped! (Payment processing)");
+            setSuccess(" Passenger dropped! (Payment processing)");
             setProcessingPayment(null);
             fetchPassengers();
           }
         } catch (paymentErr) {
           console.error("Payment order creation failed:", paymentErr);
-          setSuccess("🎉 Passenger dropped! (Payment will be processed separately)");
+          setSuccess(" Passenger dropped! (Payment will be processed separately)");
           setProcessingPayment(null);
           fetchPassengers();
         }
       } else {
-        setSuccess("🎉 Passenger dropped! Seat freed!");
+        setSuccess(" Passenger dropped! Seat freed!");
         setProcessingPayment(null);
         fetchPassengers();
       }
